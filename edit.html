@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Rating</title>
+</head>
+<body>
+<!--This is a form that uses the book data that was passed in (called: book) and displays the title and rating. It then
+has an input where the user can type in a new rating that will override the old one, along with a submit button. This
+also contains a hidden input (line 14), called "id" that holds the id of the book whose rating is being edited. This
+value will then be included when the form data is sent back to the edit function upon submission.-->
+    <form action="{{ url_for('edit') }}" method="POST">
+        <p>Book Name: {{ book['title'] }}</p>
+        <p>Current Rating: {{ book['rating'] }}</p>
+        <input hidden="hidden" name="id" value="{{ book['id'] }}">
+        <input name="rating" type="text" placeholder="New Rating">
+        <button type="submit">Change Rating</button>
+    </form>
+</body>
+</html>
