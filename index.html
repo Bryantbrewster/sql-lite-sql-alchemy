@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library</title>
+</head>
+<body>
+<h1>My Library</h1>
+<!--    if statement that checks to see if there is any data present in the books variable (a list of all queried data from-->
+<!--    the database). If there IS data, it uses a for loop to show the book's title, author and rating out of 10.
+        An edit button is also generated, which will invoke the 'edit' function/decorator and feed in the book's id (primary key)
+        as the variable "id". The same goes for the delete button and the delete function.
+
+        If there is no data present in the book list, then it displays "Library is empty."-->
+    {% if books: %}
+    <ul>
+        {% for book in books %}
+        <li>{{ book['title'] }} - {{ book['author'] }} - {{ book['rating'] }}/10
+            <a href="{{ url_for('edit', id=book['id']) }}">Edit Rating
+                <a href="{{ url_for('delete', id=book['id']) }}">Delete Book</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else: %}
+        <p>Library is empty.</p>
+    {% endif %}
+
+
+<a href="{{ url_for('add') }}">Add New Book</a>
+</body>
+</html>
