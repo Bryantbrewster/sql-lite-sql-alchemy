@@ -1,0 +1,93 @@
+from flask import Flask, render_template, request, redirect, url_for
+# pip install flask_sqlalchemy (do this first)
+# make sure to install an older version of werkzeug (I used 2.0.3) because the new version removed stuff and
+# it causes an error messages otherwise
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+
+
+
+# create database, under the name "books"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#initializes database
+db = SQLAlchemy(app)
+
+# creating the table
+# we are creating a class with the table's/field's "rules" where we can then create objects (rows) out of
+class Book(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(250), unique=True, nullable=False)
+    author = db.Column(db.String(250), nullable=False)
+    rating = db.Column(db.Float, nullable=False)
+
+db.create_all()
+
+
+# home page. the all_books variable is created after querying the entire database to see if there is any data present
+# it then feeds the list of queried data (or an empty list if there is none) into the books arg for index.html
+@app.route('/')
+def home():
+    all_books = db.session.query(Book).all()
+    return render_template('index.html', books=all_books)
+
+# if this function/decorator is called, and the request method is post (form submission)...
+# then it will create an object called new_book out of the class Book (which is our SQL table)...
+# and it will assign the forms fields to the table's columns (the id/primary key will auto-generate)...
+# and then it will add the new_book object to the SQL table and commit. If it's invoked and not from a form submission,
+# (e.g. the "add" button was just clicked on from the home page then it renders the 'add.html' template).
+@app.route("/add", methods=['GET', 'POST'])
+def add():
+    if request.method == "POST":
+        new_book = Book(
+            title=request.form["title"],
+            author=request.form["author"],
+            rating=request.form["rating"]
+        )
+        db.session.add(new_book)
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('add.html')
+
+
+# if this function/decorator is invoked by clicking on the "edit" button on the site (which is not a POST method), it
+# will bypass the "if" function at the start and instead use request.args.get('id') which will grab the book whose edit
+# button was clicked on's ID # (primary key). It will then query the database, using that ID #, and get all the info
+# for that book. It will then send the user to the edit.html page, passing in that book's data as the 'book' variable.
+
+# If this is invoked from the edit submission tab, then it will grab the book whose rating is being updated's ID
+# (hidden value input), query the database using that primary key to get the rest of the data, and update the rating
+# accordingly, and commit the data. It will then redirect the user and send them back to the home page.
+@app.route("/edit", methods=['GET', 'POST'])
+def edit():
+    if request.method == "POST":
+        #UPDATE RECORD
+        book_id = request.form["id"]
+        book_to_update = Book.query.get(book_id)
+        book_to_update.rating = request.form['rating']
+        db.session.commit()
+        return redirect(url_for('home'))
+    book_id = request.args.get('id')
+    book_selected = Book.query.get(book_id)
+    return render_template('edit.html', book=book_selected)
+
+
+# If the delete button is clicked on the home page, it will invoke this func/decorator (using request.args.get to grab
+# the ID that was passed in when invoking this function). That ID is then used to query the database and get the full
+# record of the book, which is then deleted and a commit is done, sending the user back to the home page.
+@app.route("/delete")
+def delete():
+    book_id = request.args.get('id')
+
+    # Delete a record by ID
+    book_to_delete = Book.query.get(book_id)
+    db.session.delete(book_to_delete)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
